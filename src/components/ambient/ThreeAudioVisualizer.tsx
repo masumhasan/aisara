@@ -13,7 +13,13 @@ interface ThreeAudioVisualizerProps {
 export const ThreeAudioVisualizer: React.FC<ThreeAudioVisualizerProps> = ({ color, secondaryColor, coreState }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   
-  const lightsRef = useRef<{ l1: THREE.PointLight; l2: THREE.PointLight; l3: THREE.PointLight; l4: THREE.PointLight } | null>(null);
+  const lightsRef = useRef<{ 
+    l1: THREE.PointLight; 
+    l2: THREE.PointLight; 
+    l3: THREE.PointLight; 
+    l4: THREE.PointLight;
+    ambient: THREE.AmbientLight;
+  } | null>(null);
 
   // Keep colors updated
   useEffect(() => {
@@ -160,7 +166,7 @@ export const ThreeAudioVisualizer: React.FC<ThreeAudioVisualizerProps> = ({ colo
       // Audio reactivity
       let audioBoost = 0;
       if (analyser && dataArray) {
-        analyser.getByteTimeDomainData(dataArray);
+        analyser.getByteTimeDomainData(dataArray as any);
         let sum = 0;
         for (let i = 0; i < dataArray.length; i++) {
           const v = (dataArray[i] - 128) / 128;
