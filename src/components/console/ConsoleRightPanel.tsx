@@ -19,7 +19,7 @@ export const ConsoleRightPanel = ({
   // User's voice-to-text via mic track
   const { localParticipant } = useLocalParticipant();
   const userMicTrack = localParticipant?.getTrackPublication(Track.Source.Microphone)?.track
-    ? { participant: localParticipant, publication: localParticipant.getTrackPublication(Track.Source.Microphone)! }
+    ? { participant: localParticipant, publication: localParticipant.getTrackPublication(Track.Source.Microphone)!, source: Track.Source.Microphone }
     : undefined;
   const { segments: userVoiceSegments } = useTrackTranscription(userMicTrack);
   const scrollRef = useRef<HTMLDivElement>(null);
