@@ -1,7 +1,0 @@
-{
-  "/page": "app/page.js",
-  "/console/page": "app/console/page.js",
-  "/signal/page": "app/signal/page.js",
-  "/settings/page": "app/settings/page.js",
-  "/map/page": "app/map/page.js"
-}
