@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { BackgroundGlow } from "@/components/ambient/BackgroundGlow";
 import { HeaderTelemetry } from "@/components/layout/HeaderTelemetry";
-import { FooterTelemetry } from "@/components/layout/FooterTelemetry";
+
 import { NeuralCore } from "@/components/core/NeuralCore";
 import { PasskeyInput } from "@/components/auth/PasskeyInput";
 import { AcousticHandshake } from "@/components/audio/AcousticHandshake";
@@ -117,13 +117,7 @@ export default function SaraMatrixPage() {
           </form>
         </div>
 
-        {/* Bottom Hyper-Grid Telemetry Footer */}
-        <FooterTelemetry
-          nodeName="AP-NORTHEAST-1 (TOKYO HYPER-GRID)"
-          rtcEngine="LIVEKIT LOW-LATENCY WEBRTC"
-          cipher="TLS 1.3 // X25519-AES-GCM"
-          clearanceLevel="LVL_5"
-        />
+
       </div>
 
       {/* Active Session Overlay Console */}

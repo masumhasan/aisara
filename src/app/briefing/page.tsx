@@ -477,9 +477,7 @@ export default function BriefingPage() {
           </div>
           
         </div>
-        <div className="w-full flex justify-center mt-6 text-[10px] text-slate-500 font-telemetry tracking-wider border-t border-slate-700/50 pt-4">
-          Built by <a href="https://masumhasan.web.app/" target="_blank" rel="noopener noreferrer" className="ml-1 text-holo-cyan hover:underline font-bold transition-colors">Nur Hasan Masum</a>
-        </div>
+
       </div>
     </ConsoleLayout>
   );

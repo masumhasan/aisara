@@ -183,9 +183,7 @@ export default function ProvisioningPage() {
             ))}
           </div>
         </div>
-        <div className="w-full flex justify-center mt-8 text-[10px] text-slate-500 font-telemetry tracking-wider border-t border-slate-800 pt-4">
-          Built by <a href="https://masumhasan.web.app/" target="_blank" rel="noopener noreferrer" className="ml-1 text-orange-400 hover:underline font-bold transition-colors">Nur Hasan Masum</a>
-        </div>
+
       </div>
     </ConsoleLayout>
   );

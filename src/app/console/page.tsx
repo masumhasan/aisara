@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { ConsoleLayout } from "@/components/layout/ConsoleLayout";
+import { ThreeAudioVisualizer } from "@/components/ambient/ThreeAudioVisualizer";
 
 type CoreState = "IDLE" | "LISTENING" | "THINKING" | "SPEAKING" | "TOOL_USE" | "VISION" | "INTERRUPTED";
 
@@ -10,13 +11,13 @@ const STATE_CONFIGS: Record<CoreState, {
   speed: number; waveAmp: number; particleSpeed: number;
   label: string; status: string;
 }> = {
-  IDLE:        { color: "#00f0ff", secondaryColor: "#38bdf8", glow: "rgba(0, 240, 255, 0.25)",    speed: 0.005, waveAmp: 5,  particleSpeed: 0.4, label: "CORE STATE: IDLE MONITORING",          status: "STANDBY LISTENER" },
-  LISTENING:   { color: "#00f0ff", secondaryColor: "#7dd3fc", glow: "rgba(0, 240, 255, 0.55)",    speed: 0.014, waveAmp: 14, particleSpeed: 0.8, label: "CORE STATE: AUDIO INGESTION ACTIVE",   status: "USER VOICE DETECTED" },
-  THINKING:    { color: "#93c5fd", secondaryColor: "#60a5fa", glow: "rgba(147, 197, 253, 0.6)",  speed: 0.03, waveAmp: 9, particleSpeed: 1.3, label: "CORE STATE: INFERENCE REASONING",      status: "CROSS-ATTENTION COMPUTATION" },
-  SPEAKING:    { color: "#00f0ff", secondaryColor: "#38bdf8", glow: "rgba(0, 240, 255, 0.75)",    speed: 0.02,  waveAmp: 24, particleSpeed: 1.1, label: "CORE STATE: SPEAKING REALTIME",        status: "VOICE SYNTHESIS ENGAGED" },
-  TOOL_USE:    { color: "#f59e0b", secondaryColor: "#fbbf24", glow: "rgba(245, 158, 11, 0.75)",   speed: 0.026, waveAmp: 18, particleSpeed: 1.6, label: "CORE STATE: SUB-AGENT TOOL EXECUTION", status: "DISPATCHING KINETIC TOOLS" },
-  VISION:      { color: "#34d399", secondaryColor: "#00f0ff", glow: "rgba(52, 211, 153, 0.65)",   speed: 0.016, waveAmp: 11, particleSpeed: 0.9, label: "CORE STATE: SPATIAL OPTICAL SCANNING", status: "OPTICAL RECOGNITION LOCK" },
-  INTERRUPTED: { color: "#ff4d4d", secondaryColor: "#fb7185", glow: "rgba(255, 77, 77, 0.85)",    speed: 0.04, waveAmp: 28, particleSpeed: 2.2, label: "CORE STATE: SESSION INTERRUPT TRIGGER",status: "ARBITRATION OVERRIDE" },
+  IDLE:        { color: "#849495", secondaryColor: "#a3b8b9", glow: "rgba(132,148,149,0.3)",    speed: 0.005, waveAmp: 5,  particleSpeed: 0.4, label: "CORE STATE: IDLE MONITORING",          status: "STANDBY LISTENER" },
+  LISTENING:   { color: "#3e90ff", secondaryColor: "#7dd3fc", glow: "rgba(62,144,255,0.4)",     speed: 0.014, waveAmp: 14, particleSpeed: 0.8, label: "CORE STATE: AUDIO INGESTION ACTIVE",   status: "USER VOICE DETECTED" },
+  THINKING:    { color: "#ffb869", secondaryColor: "#ffc98a", glow: "rgba(255,184,105,0.4)",    speed: 0.03, waveAmp: 9, particleSpeed: 1.3, label: "CORE STATE: INFERENCE REASONING",      status: "CROSS-ATTENTION COMPUTATION" },
+  SPEAKING:    { color: "#00f0ff", secondaryColor: "#38bdf8", glow: "rgba(0,240,255,0.4)",      speed: 0.02,  waveAmp: 24, particleSpeed: 1.1, label: "CORE STATE: SPEAKING REALTIME",        status: "VOICE SYNTHESIS ENGAGED" },
+  TOOL_USE:    { color: "#ffb869", secondaryColor: "#fbbf24", glow: "rgba(255,154,0,0.45)",     speed: 0.026, waveAmp: 18, particleSpeed: 1.6, label: "CORE STATE: SUB-AGENT TOOL EXECUTION", status: "DISPATCHING KINETIC TOOLS" },
+  VISION:      { color: "#a855f7", secondaryColor: "#c084fc", glow: "rgba(168,85,247,0.4)",     speed: 0.016, waveAmp: 11, particleSpeed: 0.9, label: "CORE STATE: SPATIAL OPTICAL SCANNING", status: "OPTICAL RECOGNITION LOCK" },
+  INTERRUPTED: { color: "#ff4d4d", secondaryColor: "#fb7185", glow: "rgba(255,77,77,0.4)",      speed: 0.04, waveAmp: 28, particleSpeed: 2.2, label: "CORE STATE: SESSION INTERRUPT TRIGGER",status: "ARBITRATION OVERRIDE" },
 };
 
 // Particle type for the holographic orb
@@ -183,7 +184,7 @@ export default function ConsolePage() {
 
   return (
     <ConsoleLayout>
-      <div className="pt-16 pb-28 min-h-screen text-slate-200 w-full px-4 lg:px-6">
+      <div className="pt-16 pb-28 min-h-screen text-slate-200 w-full px-4 lg:px-6 relative z-10">
 
         {/* HUD Context Bar */}
         <div className="w-full flex flex-col md:flex-row items-center justify-between gap-3 pb-3 mb-4 border-b border-holo-cyan/15">
@@ -508,21 +509,9 @@ export default function ConsolePage() {
           </div>
         </div>
 
-        {/* Calibration Footer */}
-        <div className="w-full flex items-center justify-between pt-4 mt-4 border-t border-holo-cyan/15 font-telemetry text-[9px] text-slate-500 uppercase tracking-wider">
-          <div className="flex items-center gap-4">
-            <span>GRID: 0.5PX ORTHO</span>
-            <span className="hidden md:inline">PROJECTION: COLLIMATED HUD MATRIX</span>
-            <span>ENCRYPTION: AES-GCM-256</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-holo-cyan font-bold">SYS_CLOCK: {sysClock}</span>
-            <span className="text-amber-400 font-bold">AGENT STATUS: AUTONOMOUS</span>
-          </div>
-        </div>
-        <div className="w-full flex justify-center mt-2 text-[10px] text-slate-500 font-telemetry tracking-wider border-t border-holo-cyan/10 pt-2">
-          Built by <a href="https://masumhasan.web.app/" target="_blank" rel="noopener noreferrer" className="ml-1 text-holo-cyan hover:underline font-bold transition-colors">Nur Hasan Masum</a>
-        </div>
+
+        {/* Full-width 3D Audio Visualizer Canvas */}
+        <ThreeAudioVisualizer color={cfg.color} secondaryColor={cfg.secondaryColor} coreState={coreState} />
       </div>
     </ConsoleLayout>
   );

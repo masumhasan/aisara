@@ -466,9 +466,7 @@ export default function NeuralPage() {
             </div>
           </div>
         </main>
-        <div className="w-full flex justify-center mt-4 mb-24 text-[10px] text-slate-500 font-telemetry tracking-wider">
-          Built by <a href="https://masumhasan.web.app/" target="_blank" rel="noopener noreferrer" className="ml-1 text-holo-cyan hover:underline font-bold transition-colors">Nur Hasan Masum</a>
-        </div>
+
         
         {/* BOTTOM DOCK (Static position for page layout) */}
         <div className="fixed bottom-4 inset-x-0 z-50 flex items-center justify-center pointer-events-none px-4">

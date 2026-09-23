@@ -278,9 +278,7 @@ export default function HudPage() {
               </div>
             </div>
           </div>
-          <div className="w-full flex justify-center text-[10px] text-slate-500 font-telemetry tracking-wider pt-2 border-t border-orange-500/20 mt-2">
-            Built by <a href="https://masumhasan.web.app/" target="_blank" rel="noopener noreferrer" className="ml-1 text-orange-400 hover:underline font-bold transition-colors">Nur Hasan Masum</a>
-          </div>
+
         </aside>
 
         {/* FLOATING BOTTOM DOCK */}

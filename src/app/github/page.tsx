@@ -344,7 +344,7 @@ export default function GitHubCommandCenterPage() {
                     <span className="px-2 py-0.5 rounded bg-[#252a33] font-telemetry text-[10px] text-slate-200">branch: main ●</span>
                     <span className="px-2 py-0.5 rounded bg-[#252a33] font-telemetry text-[10px] text-slate-400">0 PRs</span>
                     <span className="px-2 py-0.5 rounded bg-[#252a33] font-telemetry text-[10px] text-slate-400">1 open issue</span>
-                    <span className="font-telemetry text-[10px] text-slate-400 ml-auto">Last commit: <span class="text-cyan-400 font-mono">31d04b</span> “Update streaming chunk buffer” · 42m ago</span>
+                    <span className="font-telemetry text-[10px] text-slate-400 ml-auto">Last commit: <span className="text-cyan-400 font-mono">31d04b</span> “Update streaming chunk buffer” · 42m ago</span>
                   </div>
                 </div>
               </>
@@ -846,9 +846,7 @@ export default function GitHubCommandCenterPage() {
 
           </div>
         </div>
-        <div className="w-full flex justify-center mt-2 text-[10px] text-slate-500 font-telemetry tracking-wider border-t border-amber-500/20 pt-2">
-          Built by <a href="https://masumhasan.web.app/" target="_blank" rel="noopener noreferrer" className="ml-1 text-amber-400 hover:underline font-bold transition-colors">Nur Hasan Masum</a>
-        </div>
+
       </div>
     </ConsoleLayout>
   );
