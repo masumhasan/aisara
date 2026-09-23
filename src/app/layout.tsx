@@ -3,6 +3,8 @@ import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { GlobalPageIndexDrawer } from "@/components/navigation/GlobalPageIndexDrawer";
 import { GlobalFooter } from "@/components/layout/GlobalFooter";
+import { CallControlBar } from "@/components/layout/CallControlBar";
+import { GlobalLiveKitProvider } from "@/components/layout/GlobalLiveKitProvider";
 
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -38,10 +40,11 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-[#06090e] font-body-md text-on-surface antialiased selection:bg-primary-container/30 selection:text-primary">
-        {children}
-        <GlobalFooter />
-        {/* Global page index drawer — visible on every page */}
-        <GlobalPageIndexDrawer />
+        <GlobalLiveKitProvider>
+          {children}
+          <GlobalFooter />
+          <CallControlBar />
+        </GlobalLiveKitProvider>
       </body>
     </html>
   );

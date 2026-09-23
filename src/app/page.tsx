@@ -10,8 +10,10 @@ import { AcousticHandshake } from "@/components/audio/AcousticHandshake";
 import { ModeSelector, OperationMode } from "@/components/auth/ModeSelector";
 import { InitializeButton, AuthStage } from "@/components/auth/InitializeButton";
 import { ActiveMatrixConsole } from "@/components/matrix/ActiveMatrixConsole";
+import { useRouter } from "next/navigation";
 
 export default function SaraMatrixPage() {
+  const router = useRouter();
   const [passkey, setPasskey] = useState("NRL-7749-XQ91-SYN-SARA");
   const [currentMode, setCurrentMode] = useState<OperationMode>("autonomous");
   const [authStage, setAuthStage] = useState<AuthStage>("idle");
@@ -28,10 +30,9 @@ export default function SaraMatrixPage() {
     setTimeout(() => {
       setAuthStage("verified");
 
-      // Stage 3: Launch active matrix console
+      // Stage 3: Redirect to console
       setTimeout(() => {
-        setIsConsoleOpen(true);
-        setAuthStage("idle");
+        router.push("/console");
       }, 2200);
     }, 1800);
   };

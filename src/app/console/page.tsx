@@ -3,6 +3,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ConsoleLayout } from "@/components/layout/ConsoleLayout";
 import { ThreeAudioVisualizer } from "@/components/ambient/ThreeAudioVisualizer";
+import { ConsoleLeftPanel } from "@/components/console/ConsoleLeftPanel";
+import { ConsoleRightPanel } from "@/components/console/ConsoleRightPanel";
+import { useVoiceAssistant, useConnectionState } from "@livekit/components-react";
+import { ConnectionState } from "livekit-client";
+import { useLiveKitConnection } from "@/components/layout/GlobalLiveKitProvider";
 
 type CoreState = "IDLE" | "LISTENING" | "THINKING" | "SPEAKING" | "TOOL_USE" | "VISION" | "INTERRUPTED";
 
@@ -13,9 +18,9 @@ const STATE_CONFIGS: Record<CoreState, {
 }> = {
   IDLE:        { color: "#849495", secondaryColor: "#a3b8b9", glow: "rgba(132,148,149,0.3)",    speed: 0.005, waveAmp: 5,  particleSpeed: 0.4, label: "CORE STATE: IDLE MONITORING",          status: "STANDBY LISTENER" },
   LISTENING:   { color: "#3e90ff", secondaryColor: "#7dd3fc", glow: "rgba(62,144,255,0.4)",     speed: 0.014, waveAmp: 14, particleSpeed: 0.8, label: "CORE STATE: AUDIO INGESTION ACTIVE",   status: "USER VOICE DETECTED" },
-  THINKING:    { color: "#ffb869", secondaryColor: "#ffc98a", glow: "rgba(255,184,105,0.4)",    speed: 0.03, waveAmp: 9, particleSpeed: 1.3, label: "CORE STATE: INFERENCE REASONING",      status: "CROSS-ATTENTION COMPUTATION" },
+  THINKING:    { color: "#ffb869", secondaryColor: "#ffc98a", glow: "rgba(255,184,105,0.44)",   speed: 0.03, waveAmp: 9, particleSpeed: 1.3, label: "CORE STATE: INFERENCE REASONING",      status: "CROSS-ATTENTION COMPUTATION" },
   SPEAKING:    { color: "#00f0ff", secondaryColor: "#38bdf8", glow: "rgba(0,240,255,0.4)",      speed: 0.02,  waveAmp: 24, particleSpeed: 1.1, label: "CORE STATE: SPEAKING REALTIME",        status: "VOICE SYNTHESIS ENGAGED" },
-  TOOL_USE:    { color: "#ffb869", secondaryColor: "#fbbf24", glow: "rgba(255,154,0,0.45)",     speed: 0.026, waveAmp: 18, particleSpeed: 1.6, label: "CORE STATE: SUB-AGENT TOOL EXECUTION", status: "DISPATCHING KINETIC TOOLS" },
+  TOOL_USE:    { color: "#ffb869", secondaryColor: "#fbbf24", glow: "rgba(255,154,0,0.5)",      speed: 0.026, waveAmp: 18, particleSpeed: 1.6, label: "CORE STATE: SUB-AGENT TOOL EXECUTION", status: "DISPATCHING KINETIC TOOLS" },
   VISION:      { color: "#a855f7", secondaryColor: "#c084fc", glow: "rgba(168,85,247,0.4)",     speed: 0.016, waveAmp: 11, particleSpeed: 0.9, label: "CORE STATE: SPATIAL OPTICAL SCANNING", status: "OPTICAL RECOGNITION LOCK" },
   INTERRUPTED: { color: "#ff4d4d", secondaryColor: "#fb7185", glow: "rgba(255,77,77,0.4)",      speed: 0.04, waveAmp: 28, particleSpeed: 2.2, label: "CORE STATE: SESSION INTERRUPT TRIGGER",status: "ARBITRATION OVERRIDE" },
 };
@@ -24,7 +29,7 @@ const STATE_CONFIGS: Record<CoreState, {
 type Particle = { x: number; y: number; radius: number; alpha: number; speedX: number; speedY: number };
 
 export default function ConsolePage() {
-  const [coreState, setCoreState] = useState<CoreState>("INTERRUPTED");
+  const [coreState, setCoreState] = useState<CoreState>("IDLE");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
   const tRef = useRef(0);
@@ -32,9 +37,37 @@ export default function ConsolePage() {
   const [toolInput, setToolInput] = useState("");
   const [sysClock, setSysClock] = useState("1729482104.28");
 
+  // LiveKit hooks
+  const { state: agentState } = useVoiceAssistant();
+  const connectionState = useConnectionState();
+  const { shouldConnect, setShouldConnect } = useLiveKitConnection();
+
+  useEffect(() => {
+    // Sync UI coreState with LiveKit agentState
+    if (connectionState !== ConnectionState.Connected) {
+      setCoreState("IDLE");
+      return;
+    }
+
+    switch (agentState) {
+      case "listening":
+        setCoreState("LISTENING");
+        break;
+      case "thinking":
+        setCoreState("THINKING");
+        break;
+      case "speaking":
+        setCoreState("SPEAKING");
+        break;
+      default:
+        setCoreState("IDLE");
+        break;
+    }
+  }, [agentState, connectionState]);
+
   // Init particles
   useEffect(() => {
-    particlesRef.current = Array.from({ length: 90 }, () => {
+    particlesRef.current = Array.from({ length: 117 }, () => {
       return {
         x: (Math.random() - 0.5) * 500,
         y: (Math.random() - 0.5) * 500,
@@ -119,7 +152,7 @@ export default function ConsolePage() {
       // 3. Floating Orbital Particles
       ctx.save();
       ctx.translate(cx, cy);
-      particlesRef.current.forEach(p => {
+      particlesRef.current.forEach((p, idx) => {
         p.x += p.speedX * cfg.particleSpeed;
         p.y += p.speedY * cfg.particleSpeed;
 
@@ -127,6 +160,9 @@ export default function ConsolePage() {
         if (p.x < -260) p.x = 260;
         if (p.y > 260) p.y = -260;
         if (p.y < -260) p.y = 260;
+
+        // Hide the extra 30% particles unless in THINKING or TOOL_USE state
+        if (idx >= 90 && coreState !== "THINKING" && coreState !== "TOOL_USE") return;
 
         ctx.fillStyle = cfg.color;
         ctx.globalAlpha = p.alpha;
@@ -182,6 +218,30 @@ export default function ConsolePage() {
     return () => cancelAnimationFrame(animFrame);
   }, [coreState]);
 
+  if (!shouldConnect) {
+    return (
+      <div className="min-h-screen w-full bg-[#02050e] flex flex-col items-center justify-center relative overflow-hidden text-center z-50">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-holo-cyan/10 via-[#02050e] to-[#02050e] pointer-events-none"></div>
+        <div className="w-[400px] h-[400px] absolute rounded-full border border-holo-cyan/20 animate-[spin_60s_linear_infinite] border-dashed"></div>
+        <div className="w-[300px] h-[300px] absolute rounded-full border border-holo-cyan/10 animate-[spin_40s_linear_infinite_reverse]"></div>
+        
+        <h1 className="font-sans font-extrabold text-[32px] text-white tracking-[0.25em] drop-shadow-[0_0_16px_rgba(0,240,255,0.6)] mb-2 relative z-10">
+          SARA // CORE
+        </h1>
+        <p className="font-telemetry text-[11px] text-holo-cyan tracking-[0.2em] mb-12 relative z-10">
+          SECURE RTC CHANNEL ESTABLISHMENT
+        </p>
+
+        <button
+          onClick={() => setShouldConnect(true)}
+          className="relative z-10 px-12 py-4 bg-[#0a1f3d]/80 backdrop-blur-md text-cyan-300 font-telemetry font-bold text-[14px] tracking-[0.3em] rounded-full border border-holo-cyan/50 hover:bg-holo-cyan/20 hover:text-white transition-all shadow-[0_0_30px_rgba(0,240,255,0.2),inset_0_0_15px_rgba(0,240,255,0.1)] hover:scale-105 active:scale-95"
+        >
+          ENTER MATRIX
+        </button>
+      </div>
+    );
+  }
+
   return (
     <ConsoleLayout>
       <div className="pt-16 pb-28 min-h-screen text-slate-200 w-full px-4 lg:px-6 relative z-10">
@@ -228,119 +288,11 @@ export default function ConsolePage() {
         <div className="grid grid-cols-12 gap-5 items-start w-full">
 
           {/* ======= LEFT: Neural Telemetry + Optical Vision ======= */}
-          <div className="col-span-12 lg:col-span-3 flex flex-col gap-4 order-2 lg:order-1">
-
-            {/* Neural Telemetry */}
-            <div className="relative bg-[#040a16]/78 backdrop-blur-xl border border-holo-cyan/18 rounded-lg p-4 shadow-[0_8px_32px_rgba(0,0,0,0.85),inset_0_0_15px_rgba(0,240,255,0.05)]">
-              <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-holo-cyan"></span>
-              <span className="absolute top-0 right-0 w-2 h-2 border-t border-r border-holo-cyan"></span>
-              <span className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-holo-cyan"></span>
-              <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-holo-cyan"></span>
-
-              <div className="flex items-center justify-between pb-2 mb-3 border-b border-holo-cyan/20">
-                <div className="flex items-center gap-2">
-                  <span className="font-telemetry text-[11px] text-holo-cyan font-bold tracking-widest uppercase">NEURAL TELEMETRY</span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-holo-cyan animate-pulse"></span>
-                </div>
-                <span className="font-telemetry text-[9px] text-slate-500">[SYS-01]</span>
-              </div>
-
-              <div className="space-y-3 font-telemetry text-[11px]">
-                {[
-                  { label: "INFERENCE EFFICIENCY", value: "94.2%", pct: 94, color: "#00f0ff", vcolor: "text-holo-cyan" },
-                  { label: "TOKEN BUFFER FLUX",    value: "3,842 / 8k", pct: 48, color: "#38bdf8", vcolor: "text-sky-300" },
-                ].map(g => (
-                  <div key={g.label}>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-slate-300">{g.label}</span>
-                      <span className={`font-bold ${g.vcolor}`}>{g.value}</span>
-                    </div>
-                    <div className="h-1.5 w-full bg-[#030914] rounded-full overflow-hidden border border-holo-cyan/20 p-px">
-                      <div className="h-full rounded-full shadow-[0_0_8px_#00f0ff] transition-all duration-500"
-                        style={{ width: `${g.pct}%`, background: `linear-gradient(to right, ${g.color}99, ${g.color})` }}></div>
-                    </div>
-                  </div>
-                ))}
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  <div className="p-2 rounded bg-[#020713]/80 border border-holo-cyan/20">
-                    <div className="font-telemetry text-[8px] text-slate-500 uppercase tracking-wider">LATENCY (RTC)</div>
-                    <div className="font-telemetry text-[13px] text-holo-cyan font-bold mt-0.5">14.8 ms</div>
-                    <div className="font-telemetry text-[8px] text-sky-400/80 mt-0.5">Jitter: ±0.3ms</div>
-                  </div>
-                  <div className="p-2 rounded bg-[#020713]/80 border border-holo-cyan/20">
-                    <div className="font-telemetry text-[8px] text-slate-500 uppercase tracking-wider">PACKET LOSS</div>
-                    <div className="font-telemetry text-[13px] text-emerald-400 font-bold mt-0.5">0.00 %</div>
-                    <div className="font-telemetry text-[8px] text-slate-400 mt-0.5">Opus / 48kHz</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Acoustic Harmonics */}
-              <div className="mt-4 pt-3 border-t border-holo-cyan/15">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-telemetry text-[9px] tracking-widest text-slate-400 uppercase">ACOUSTIC HARMONICS SPECTRUM</span>
-                  <span className="font-telemetry text-[9px] text-holo-cyan">24 BAND // STEREO</span>
-                </div>
-                <div className="h-12 flex items-end justify-between gap-1 bg-[#020612]/90 rounded border border-holo-cyan/20 p-1.5">
-                  {audioBarsHeights.map((h, i) => (
-                    <div key={i} className="flex-1 rounded-sm transition-all duration-75"
-                      style={{
-                        height: `${h}%`,
-                        backgroundColor: cfg.color,
-                        boxShadow: `0 0 6px ${cfg.color}`,
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Optical Sensor Feed */}
-            <div className="relative bg-[#040a16]/78 backdrop-blur-xl border border-holo-cyan/18 rounded-lg p-4 shadow-[0_8px_32px_rgba(0,0,0,0.85),inset_0_0_15px_rgba(0,240,255,0.05)]">
-              <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-holo-cyan"></span>
-              <span className="absolute top-0 right-0 w-2 h-2 border-t border-r border-holo-cyan"></span>
-              <span className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-holo-cyan"></span>
-              <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-holo-cyan"></span>
-
-              <div className="flex items-center justify-between pb-2 mb-2 border-b border-holo-cyan/20">
-                <div className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[15px] text-holo-cyan">videocam</span>
-                  <span className="font-telemetry text-[11px] text-holo-cyan font-bold tracking-widest uppercase">OPTICAL SENSOR FEED</span>
-                </div>
-                <span className="px-2 py-0.5 rounded font-telemetry text-[9px] bg-holo-cyan/15 text-holo-cyan border border-holo-cyan/40 animate-pulse font-semibold">FEED ACTIVE</span>
-              </div>
-
-              <div className="relative h-44 rounded overflow-hidden bg-[#010308] border border-holo-cyan/30 flex items-center justify-center">
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_60%_at_50%_50%,rgba(0,240,255,0.08),transparent)]"></div>
-                <div className="absolute inset-0 p-3 flex flex-col justify-between pointer-events-none">
-                  <div className="flex justify-between font-telemetry text-[9px] text-holo-cyan/90 font-bold">
-                    <span>FOV: 98.4° WIDE</span>
-                    <span className="text-emerald-400">CONF: 99.4%</span>
-                  </div>
-                  <div className="self-center relative flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-full border border-dashed border-holo-cyan/70 animate-spin" style={{ animationDuration: "8s" }}></div>
-                    <div className="absolute w-10 h-10 rounded-full border border-holo-cyan/50"></div>
-                    <div className="absolute w-2.5 h-2.5 rounded-full bg-holo-cyan shadow-[0_0_12px_#00f0ff]"></div>
-                    <div className="absolute -top-5 font-telemetry text-[8px] text-holo-cyan tracking-widest bg-[#02050e]/90 px-1.5 py-0.5 rounded border border-holo-cyan/40 font-bold">[TARGET_LOCK]</div>
-                  </div>
-                  <div className="flex justify-between font-telemetry text-[9px] text-slate-300">
-                    <span>TRACK: DESKTOP_STREAM</span>
-                    <span className="text-holo-cyan font-bold">60 FPS</span>
-                  </div>
-                </div>
-                <div className="absolute top-5 right-4 border border-amber-400 bg-amber-400/20 px-2 py-0.5 rounded font-telemetry text-[8px] text-amber-300 font-bold tracking-tight shadow-[0_0_12px_rgba(245,158,11,0.4)]">
-                  OBJ: SECURITY_REPORT.PDF (98.7%)
-                </div>
-              </div>
-              <div className="mt-2.5 flex items-center justify-between font-telemetry text-[9px] text-slate-400">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                  OCR KERNEL PARSER ENGAGED
-                </span>
-                <span className="text-holo-cyan font-bold">1.2MP RES</span>
-              </div>
-            </div>
-          </div>
+          <ConsoleLeftPanel 
+            coreState={coreState} 
+            cfg={cfg} 
+            audioBarsHeights={audioBarsHeights} 
+          />
 
           {/* ======= CENTER: Holographic AI Core (60%) ======= */}
           <div className="col-span-12 lg:col-span-6 flex flex-col items-center justify-center relative min-h-[580px] lg:min-h-[660px] order-1 lg:order-2 px-2">
@@ -389,124 +341,14 @@ export default function ConsolePage() {
               </div>
             </div>
 
-            {/* Audio waveform */}
-            <div className="w-full max-w-lg mt-3 flex flex-col items-center">
-              <div className="w-full flex items-center justify-between font-telemetry text-[10px] text-slate-400 mb-1.5 px-2">
-                <span className="uppercase tracking-widest">SPATIAL RESONANCE</span>
-                <span className="font-bold tracking-wider" style={{ color: cfg.color }}>{cfg.status}</span>
-                <span className="uppercase tracking-widest">LATERAL FIELD</span>
-              </div>
-              <div className="w-full h-9 flex items-center overflow-hidden bg-[#030914]/90 rounded border border-holo-cyan/25 shadow-[inset_0_0_12px_rgba(0,240,255,0.08)]">
-                <svg className="w-full h-full" viewBox="0 0 400 36" preserveAspectRatio="none">
-                  {/* Sine Wave 1 */}
-                  <path
-                    d={wavePath1}
-                    fill="none" stroke={cfg.color} strokeOpacity="0.9" strokeWidth="1.8"
-                  />
-                  {/* Sine Wave 2 */}
-                  <path
-                    d={wavePath2}
-                    fill="none" stroke="#38BDF8" strokeOpacity="0.6" strokeWidth="1.3"
-                  />
-                </svg>
-              </div>
-            </div>
           </div>
 
           {/* ======= RIGHT: RTC Transcript + Tool Execution ======= */}
-          <div className="col-span-12 lg:col-span-3 flex flex-col gap-4 order-3">
-
-            {/* RTC Transcript */}
-            <div className="relative bg-[#040a16]/78 backdrop-blur-xl border border-holo-cyan/18 rounded-lg p-4 shadow-[0_8px_32px_rgba(0,0,0,0.85),inset_0_0_15px_rgba(0,240,255,0.05)]">
-              <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-holo-cyan"></span>
-              <span className="absolute top-0 right-0 w-2 h-2 border-t border-r border-holo-cyan"></span>
-              <span className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-holo-cyan"></span>
-              <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-holo-cyan"></span>
-
-              <div className="flex items-center justify-between pb-2 mb-3 border-b border-holo-cyan/20">
-                <div className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[16px] text-holo-cyan">forum</span>
-                  <span className="font-telemetry text-[11px] text-holo-cyan font-bold tracking-widest uppercase">RTC STREAM TRANSCRIPT</span>
-                </div>
-                <span className="font-telemetry text-[9px] text-slate-500">[CH-01]</span>
-              </div>
-
-              <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
-                <div className="p-2.5 rounded bg-[#030b1a]/80 border-l-2 border-sky-400">
-                  <div className="flex items-center justify-between font-telemetry text-[9px] text-sky-400 font-bold mb-1">
-                    <span>USER // OP-01</span><span className="text-slate-500">10:42:19.04</span>
-                  </div>
-                  <p className="font-sans text-[12px] text-slate-200 leading-snug">&ldquo;Scan my inbox for the product security audit and draft a summary.&rdquo;</p>
-                </div>
-                <div className="p-2.5 rounded bg-[#041224]/85 border-l-2 border-holo-cyan">
-                  <div className="flex items-center justify-between font-telemetry text-[9px] text-holo-cyan font-bold mb-1">
-                    <span className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-holo-cyan animate-ping"></span>
-                      SARA // ASSISTANT
-                    </span>
-                    <span className="text-slate-500">10:42:20.12</span>
-                  </div>
-                  <p className="font-sans text-[12px] text-cyan-200 leading-relaxed">&ldquo;Accessing mailbox via Secure Token. Located 3 relevant threads from SecOps regarding the Q3 pen-test.&rdquo;</p>
-                </div>
-              </div>
-
-              <div className="mt-3 pt-2 border-t border-holo-cyan/15 flex items-center justify-between font-telemetry text-[9px] text-slate-400">
-                <span className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[13px] text-holo-cyan">graphic_eq</span>
-                  SYNTH: 148 WPM
-                </span>
-                <span className="text-emerald-400 font-bold">CONF: 99.8%</span>
-              </div>
-            </div>
-
-            {/* Tool Execution Bus */}
-            <div className="relative bg-[#0e0a05]/82 backdrop-blur-xl border border-amber-500/28 rounded-lg p-4 shadow-[0_8px_32px_rgba(0,0,0,0.85),inset_0_0_15px_rgba(245,158,11,0.06)]">
-              <span className="absolute top-0 left-0 w-2 h-2 border-t border-l border-amber-500"></span>
-              <span className="absolute top-0 right-0 w-2 h-2 border-t border-r border-amber-500"></span>
-              <span className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-amber-500"></span>
-              <span className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-amber-500"></span>
-
-              <div className="flex items-center justify-between pb-2 mb-3 border-b border-amber-500/30">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_#f59e0b]"></span>
-                  <span className="font-telemetry text-[11px] text-amber-400 font-bold tracking-widest uppercase">TOOL EXECUTION BUS</span>
-                </div>
-                <span className="px-2 py-0.5 rounded font-telemetry text-[9px] bg-amber-400/20 text-amber-400 border border-amber-400/40 font-bold tracking-wider">KINETIC</span>
-              </div>
-
-              <div className="space-y-2.5 font-telemetry text-[10px]">
-                {toolSteps.map(step => (
-                  <div
-                    key={step.id}
-                    className={`p-2.5 rounded border ${step.active ? "bg-[#1c1205]/90 border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.2)]" : step.done ? "bg-[#130c04]/90 border-amber-500/30" : "bg-[#0d0903]/80 border-amber-500/20 opacity-75"}`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className={`font-bold tracking-wider flex items-center gap-1.5 ${step.active ? "text-amber-300" : step.done ? "text-amber-400" : "text-amber-600"}`}>
-                        {step.active && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>}
-                        [ {step.id} ] {step.name}
-                      </span>
-                      <span className={`font-semibold ${step.done ? "text-emerald-400" : step.active ? "text-amber-400 animate-pulse" : "text-slate-500"}`}>{step.status}</span>
-                    </div>
-                    <div className={`text-[9px] ${step.active ? "text-amber-200" : step.done ? "text-slate-300" : "text-slate-400"}`}>{step.detail}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Terminal prompt */}
-              <div className="mt-3 pt-2.5 border-t border-amber-500/20 flex items-center gap-2">
-                <span className="font-telemetry text-[11px] text-amber-400 font-bold">❯</span>
-                <input
-                  className="bg-transparent text-[11px] font-telemetry text-amber-300 placeholder:text-slate-600 focus:outline-none w-full"
-                  placeholder="Inject kernel command..."
-                  value={toolInput}
-                  onChange={e => setToolInput(e.target.value)}
-                />
-                <button className="text-amber-400 hover:text-amber-300 transition-all" title="Execute">
-                  <span className="material-symbols-outlined text-[17px]">arrow_forward</span>
-                </button>
-              </div>
-            </div>
-          </div>
+          <ConsoleRightPanel 
+            toolSteps={toolSteps} 
+            toolInput={toolInput} 
+            setToolInput={setToolInput} 
+          />
         </div>
 
 

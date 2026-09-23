@@ -35,59 +35,6 @@ export const ConsoleLayout: React.FC<ConsoleLayoutProps> = ({ children }) => {
         {children}
       </div>
       
-      {/* Floating Call Control Dock (Capsule at Bottom Center) */}
-      <div className="fixed bottom-5 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
-        <div className="pointer-events-auto flex items-center gap-2 sm:gap-3 px-4 py-2 rounded-full bg-[#030915]/85 backdrop-blur-2xl border border-holo-cyan/40 shadow-[0_0_30px_rgba(0,240,255,0.22),inset_0_0_15px_rgba(0,240,255,0.1)]">
-          <button
-            className="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-holo-cyan hover:bg-[#07152b] transition-all"
-            title="Audio Output Device"
-          >
-            <span className="material-symbols-outlined text-[19px]">volume_up</span>
-          </button>
-          <button
-            className="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-holo-cyan hover:bg-[#07152b] transition-all"
-            title="Toggle Optical Vision Feed"
-          >
-            <span className="material-symbols-outlined text-[19px]">videocam</span>
-          </button>
-          <button
-            className="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-holo-cyan hover:bg-[#07152b] transition-all"
-            title="Share Screen Stream"
-          >
-            <span className="material-symbols-outlined text-[19px]">screen_share</span>
-          </button>
-
-          {/* Main Glowing Voice Mic Button */}
-          <button
-            className="relative w-14 h-14 rounded-full bg-gradient-to-tr from-[#00b4d8] to-[#00f0ff] text-[#020409] font-bold flex items-center justify-center shadow-[0_0_24px_rgba(0,240,255,0.7)] hover:scale-105 transition-all"
-            title="Voice Input Active"
-          >
-            <span className="material-symbols-outlined text-[24px]">mic</span>
-          </button>
-
-          <button
-            className="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-holo-cyan hover:bg-[#07152b] transition-all"
-            title="Realtime Transcript Feed"
-          >
-            <span className="material-symbols-outlined text-[19px]">chat_bubble</span>
-          </button>
-          <button
-            className="w-10 h-10 rounded-full flex items-center justify-center text-slate-300 hover:text-holo-cyan hover:bg-[#07152b] transition-all"
-            title="Sub-agent Tool Registry"
-          >
-            <span className="material-symbols-outlined text-[19px]">data_object</span>
-          </button>
-          
-          <div className="h-6 w-px bg-holo-cyan/30 mx-1"></div>
-          
-          <button
-            className="w-10 h-10 rounded-full flex items-center justify-center text-red-400 border border-red-500/40 hover:bg-red-500/20 hover:text-red-200 transition-all shadow-[0_0_10px_rgba(255,77,77,0.2)]"
-            title="Terminate Session"
-          >
-            <span className="material-symbols-outlined text-[19px]">call_end</span>
-          </button>
-        </div>
-      </div>
     </div>
   );
 };
